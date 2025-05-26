@@ -16,7 +16,11 @@ def load_questions():
 # Generate the same quiz each day, cached by date + mode
 @st.cache_data
 def get_daily_quiz(df, mode, date_str):
-    seed = hash(date_str + mode)
+    import hashlib
+    def generate_seed(s):
+        return int(hashlib.sha256(s.encode()).hexdigest(), 16) % (2**32)
+
+    seed = generate_seed(date_str + mode)
     filtered_df = df if mode == "All Questions" else df[df["source"].str.lower() == "pub"]
     quiz_qs = filtered_df.sample(n=min(15, len(filtered_df)), random_state=seed).reset_index(drop=True)
     return quiz_qs
