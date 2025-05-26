@@ -47,36 +47,38 @@ st.subheader("Answer the following questions:")
 with st.form("quiz_form"):
     for i, row in quiz_qs.iterrows():
         answer = st.text_input(f"{i+1}. {row['question_text']}", key=f"q_{i}")
-        user_answers.append((row["answer_text"], answer))
+        user_answers.append({
+            "question": row["question_text"],
+            "correct_answer": row["answer_text"],
+            "user_answer": answer
+        })
     submitted = st.form_submit_button("Submit Answers")
 
 # Scoring
-# After scoring
 if submitted:
     score = 0
     detailed_results = []
-    st.subheader("Results:")
 
-    for idx, (correct, user) in enumerate(user_answers):
-        correct_clean = str(correct).strip().lower().replace("&", "and")
-        user_clean = str(user).strip().lower().replace("&", "and")
+    for idx, ans in enumerate(user_answers):
+        correct_clean = ans["correct_answer"].strip().lower().replace("&", "and")
+        user_clean = ans["user_answer"].strip().lower().replace("&", "and")
         similarity = fuzz.ratio(correct_clean, user_clean)
         is_correct = similarity >= 85
         if is_correct:
             score += 1
+
         detailed_results.append({
-            "Question #": idx + 1,
-            "Your Answer": user,
-            "Correct Answer": correct,
+            "Question": ans["question"],
+            "Your Answer": ans["user_answer"],
+            "Correct Answer": ans["correct_answer"],
             "Match (%)": similarity,
             "Result": "✅ Correct" if is_correct else "❌ Incorrect"
         })
 
     st.success(f"Your Score: {score} / {len(user_answers)}")
-
-    # Save results to session state to preserve across reruns
     st.session_state["detailed_results"] = detailed_results
     st.session_state["show_details"] = False
+
 
 # After form section
 if "detailed_results" in st.session_state:
@@ -85,13 +87,16 @@ if "detailed_results" in st.session_state:
 
     if st.session_state.get("show_details", False):
         st.subheader("Detailed Results")
-        for res in st.session_state["detailed_results"]:
+        for i, res in enumerate(st.session_state["detailed_results"], start=1):
             st.markdown(
                 f"""
-                **Q{res['Question #']}**  
-                📝 Your Answer: `{res['Your Answer']}`  
-                ✅ Correct Answer: `{res['Correct Answer']}`  
-                🔍 Match: {res['Match (%)']}% → **{res['Result']}**
-                ---
-                """
+                <div style="margin-bottom: 1.5em; padding: 0.5em; border-bottom: 1px solid #ccc;">
+                    <strong>{i}. {res['Question']}</strong><br>
+                    <span style="font-size: 1.05em;">📝 <u>Your Answer</u>: {res['Your Answer']}</span><br>
+                    <span style="font-size: 1.05em;">✅ <u>Correct Answer</u>: {res['Correct Answer']}</span><br>
+                    <span style="font-size: 1.05em;">🔍 <u>Match</u>: {res['Match (%)']}% → {res['Result']}</span>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
+
