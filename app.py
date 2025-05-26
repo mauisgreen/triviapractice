@@ -75,14 +75,20 @@ if submitted:
 
     st.success(f"Your Score: {score} / {len(user_answers)}")
 
-    if st.toggle("Show Detailed Answers & Match Scores"):
-        for res in detailed_results:
-            st.markdown(
-                f"""
-                **Q{res['Question #']}**  
-                📝 Your Answer: `{res['Your Answer']}`  
-                ✅ Correct Answer: `{res['Correct Answer']}`  
-                🔍 Match: {res['Match (%)']}% → **{res['Result']}**
-                ---
-                """
-            )
+    # Toggle for showing results
+    if "show_details" not in st.session_state:
+        st.session_state.show_details = False
+
+    if st.checkbox("Show Detailed Answers & Match Scores", value=st.session_state.show_details):
+        st.session_state.show_details = True
+
+            for res in detailed_results:
+                st.markdown(
+                    f"""
+                    **Q{res['Question #']}**  
+                    📝 Your Answer: `{res['Your Answer']}`  
+                    ✅ Correct Answer: `{res['Correct Answer']}`  
+                    🔍 Match: {res['Match (%)']}% → **{res['Result']}**
+                    ---
+                    """
+                )
