@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import random
+from fuzzywuzzy import fuzz
 
 st.set_page_config(page_title="Pub Trivia Practice", layout="centered")
 
@@ -40,9 +41,19 @@ if submitted:
     score = 0
     st.subheader("Results:")
     for idx, (correct, user) in enumerate(user_answers):
-        is_correct = str(correct).strip().lower() == str(user).strip().lower()
+        correct_clean = str(correct).strip().lower().replace("&", "and")
+        user_clean = str(user).strip().lower().replace("&", "and")
+
+        similarity = fuzz.ratio(correct_clean, user_clean)
+
+        is_correct = similarity >= 85  # Set the match threshold
+
         if is_correct:
             score += 1
-        st.markdown(f"**Q{idx+1}:** {'✅ Correct' if is_correct else f'❌ Incorrect (Correct: {correct})'}")
+            result = "✅ Correct"
+        else:
+            result = f"❌ Incorrect (Correct: {correct}) [Match: {similarity}%]"
 
-    st.success(f"Your Score: {score} / {len(user_answers)}")
+        st.markdown(f"**Q{idx+1}:** {result}")
+
+    st.success(f"🎉 Your Score: {score} / {len(user_answers)}")
