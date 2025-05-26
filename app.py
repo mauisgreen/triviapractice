@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import random
-from fuzzywuzzy import fuzz
 
 st.set_page_config(page_title="Pub Trivia Practice", layout="centered")
 
@@ -36,24 +35,44 @@ with st.form("quiz_form"):
         user_answers.append((row["answer"], answer))
     submitted = st.form_submit_button("Submit Answers")
 
-# Scoring
+from fuzzywuzzy import fuzz
+
+# Scoring with fuzzy match + answer review toggle
 if submitted:
     score = 0
+    detailed_results = []
     st.subheader("Results:")
+
     for idx, (correct, user) in enumerate(user_answers):
         correct_clean = str(correct).strip().lower().replace("&", "and")
         user_clean = str(user).strip().lower().replace("&", "and")
 
         similarity = fuzz.ratio(correct_clean, user_clean)
-
-        is_correct = similarity >= 85  # Set the match threshold
+        is_correct = similarity >= 85
 
         if is_correct:
             score += 1
-            result = "✅ Correct"
-        else:
-            result = f"❌ Incorrect (Correct: {correct}) [Match: {similarity}%]"
 
-        st.markdown(f"**Q{idx+1}:** {result}")
+        detailed_results.append({
+            "Question #": idx + 1,
+            "Your Answer": user,
+            "Correct Answer": correct,
+            "Match (%)": similarity,
+            "Result": "✅ Correct" if is_correct else "❌ Incorrect"
+        })
 
     st.success(f"🎉 Your Score: {score} / {len(user_answers)}")
+
+    # Show details only if user clicks
+    if st.toggle("Show Detailed Answers & Match Scores"):
+        for res in detailed_results:
+            st.markdown(
+                f"""
+                **Q{res['Question #']}**  
+                📝 Your Answer: `{res['Your Answer']}`  
+                ✅ Correct Answer: `{res['Correct Answer']}`  
+                🔍 Match: {res['Match (%)']}% → **{res['Result']}**
+                ---
+                """
+            )
+
