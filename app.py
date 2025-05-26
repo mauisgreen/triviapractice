@@ -51,6 +51,7 @@ with st.form("quiz_form"):
     submitted = st.form_submit_button("Submit Answers")
 
 # Scoring
+# After scoring
 if submitted:
     score = 0
     detailed_results = []
@@ -61,10 +62,8 @@ if submitted:
         user_clean = str(user).strip().lower().replace("&", "and")
         similarity = fuzz.ratio(correct_clean, user_clean)
         is_correct = similarity >= 85
-
         if is_correct:
             score += 1
-
         detailed_results.append({
             "Question #": idx + 1,
             "Your Answer": user,
@@ -75,20 +74,24 @@ if submitted:
 
     st.success(f"Your Score: {score} / {len(user_answers)}")
 
-    # Toggle for showing results
-    if "show_details" not in st.session_state:
-        st.session_state.show_details = False
+    # Save results to session state to preserve across reruns
+    st.session_state["detailed_results"] = detailed_results
+    st.session_state["show_details"] = False
 
-    if st.checkbox("Show Detailed Answers & Match Scores", value=st.session_state.show_details):
-        st.session_state.show_details = True
+# After form section
+if "detailed_results" in st.session_state:
+    if st.button("Show Detailed Answers"):
+        st.session_state["show_details"] = True
 
-        for res in detailed_results:
+    if st.session_state.get("show_details", False):
+        st.subheader("Detailed Results")
+        for res in st.session_state["detailed_results"]:
             st.markdown(
-                  f"""
-                 **Q{res['Question #']}**  
-                 📝 Your Answer: `{res['Your Answer']}`  
-                 ✅ Correct Answer: `{res['Correct Answer']}`  
-                  🔍 Match: {res['Match (%)']}% → **{res['Result']}**
-                  ---
-                  """
-             )
+                f"""
+                **Q{res['Question #']}**  
+                📝 Your Answer: `{res['Your Answer']}`  
+                ✅ Correct Answer: `{res['Correct Answer']}`  
+                🔍 Match: {res['Match (%)']}% → **{res['Result']}**
+                ---
+                """
+            )
